@@ -1,0 +1,80 @@
+CACHE_DIR = $(HACL_HOME)/code/.cache
+OUTPUT_DIR = $(HACL_HOME)/code/output
+
+# Filling out the right invocations to generate a .krml
+# $(OUTPUT_DIR)/%.krml: | $(OUTPUT_DIR)
+# 	$(FSTAR) \
+#           $(subst $(CACHE_DIR)/,,$(subst .checked.lax,,$<)) \
+# 	  --codegen Kremlin \
+# 	  --extract_module $(basename $(notdir $(subst .checked.lax,,$<)))
+
+
+# F* doesn't recursively create directories for --odir
+$(OUT_DIR):
+	mkdir -p $@
+
+$(OUTPUT_DIR):
+	mkdir -p $@
+
+$(CACHE_DIR):
+	mkdir -p $@
+
+# 1. Generation of the .krml files
+# - generate the F* dependency graph via `fstar --dep full`
+# - verify every F* file in parallel to generate .checked files
+# - extract each .checked file into a .krml file in parallel
+
+FSTAR_INCLUDES += $(KREMLIN_HOME)/kremlib $(HACL_HOME)/code/lib/kremlin
+FSTAR	= $(FSTAR_HOME)/bin/fstar.exe --cache_checked_modules \
+  --use_two_phase_tc true \
+  --cache_dir $(CACHE_DIR) --odir $(OUTPUT_DIR) \
+  $(addprefix --include ,$(FSTAR_INCLUDES)) \
+  --use_hints # --record_hints --hint_info
+
+
+.PRECIOUS: %.krml
+
+.depend:
+	$(FSTAR) --dep full $(ROOTS) --extract Kremlin > $@
+
+include .depend
+
+$(CACHE_DIR)/%.checked: | .depend
+	$(FSTAR) $< && \
+	touch $@
+
+$(OUTPUT_DIR)/%.krml: | .depend
+	$(FSTAR) --codegen Kremlin \
+	  --extract_module $(basename $(notdir $(subst .checked,,$<))) \
+	  $(notdir $(subst .checked,,$<)) && \
+	touch $@
+
+
+# 2. Generation of the .c files
+# ifneq (,$(EVEREST_WINDOWS))
+# KOPTS		+=-falloca -ftail-calls -fnouint128 -drop FStar.UInt128 \
+#   -add-early-include '"FStar_UInt128.h"'
+# CFLAGS	+=-DNO_OPENSSL
+# endif
+
+$(GENERATED_DIR)/Makefile.include: $(ALL_KRML_FILES) | .depend
+	$(KREMLIN_HOME)/krml -skip-compilation -minimal \
+	  -add-include '"kremlib.h"' -add-include '"kremlin/c_string.h"' \
+	  -bundle 'FStar.*,Prims,C.Loops,Spec.*,Hacl.Spec.*,Seq.*' \
+	  -tmpdir generated $^ -warn-error +9 \
+	  && \
+	touch $@
+
+# This will generate an error the first time this Makefile is invoked because
+# $(ALL_KRML_FILES) is empty. This is why we need to stage the `all` target.
+-include $(GENERATED_DIR)/Makefile.include
+
+
+# GNU Make manual section 4.14
+%.d: %.c
+	@set -e; rm -f $@; \
+	  $(CC) -MM $(CFLAGS) $< > $@.$$$$; \
+	  sed 's,\($(notdir $*)\)\.o[ :]*,$(dir $@)\1.o $@ : ,g' < $@.$$$$ > $@; \
+	  rm -f $@.$$$$
+
+-include $(addsuffix .d,$(ALL_SOURCES))
