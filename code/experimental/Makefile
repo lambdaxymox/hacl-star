@@ -10,6 +10,9 @@ DIRECTORIES=
 
 extract-c: $(addsuffix -c, $(DIRECTORIES))
 
+test:
+	@echo "No tests for Experimental here"
+
 all-ci:
 
 all-ct:
