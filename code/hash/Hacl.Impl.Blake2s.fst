@@ -569,14 +569,6 @@ val blake2s :
     (ensures  (fun h0 _ h1 -> preserves_live h0 h1 /\ modifies1 res h0 h1))
 
 let blake2s ll d kk k nn res =
-  let data_blocks : size_t = size 1 +. ((ll -. (size 1)) /. (size Spec.size_block)) in
-
-  let padded_data_length : size_t = data_blocks *. (size Spec.size_block) in
-
-  let data_length : size_t = (size Spec.size_block) +. padded_data_length in
-  let len_st_u32 = size 32 +. size 8 in
-  let len_st_u8 = (size 32) +. padded_data_length +. ((size Spec.size_block) +. data_length) in
-  assert(v ((size 32) +. padded_data_length) <= v len_st_u8); admit();
   let h0 = ST.get () in
   alloc1_with #h0 (size 8) Spec.const_iv create_const_iv res
   (fun h -> (fun _ _ -> True))
@@ -585,31 +577,38 @@ let blake2s ll d kk k nn res =
     alloc1_with #h0 (size 160) Spec.const_sigma create_const_sigma res
     (fun h -> (fun _ _ -> True))
     (fun const_sigma ->
-      let h0 = ST.get () in
-      alloc1 #h0 len_st_u8 (u8 0) res
-      (fun h0 -> (fun _ r -> True))
-      (fun st_u8 ->
-        let padded_data = sub st_u8 (size 32) padded_data_length in
-        let padded_key = sub #uint8 #(v len_st_u8) #(Spec.size_block) st_u8 ((size 32) +. padded_data_length) (size Spec.size_block) in
-        let data = sub #uint8 #(v len_st_u8) #(v data_length) st_u8 ((size 32) +. (padded_data_length +. (size Spec.size_block))) data_length in
+      if ll = (size 0) && kk = (size 0) then
+        (**) let h0 = ST.get () in
+        alloc1 #h0 (size Spec.size_block) (u8 0) res
+        (fun h -> (fun _ _ -> True))
+        (fun block_zeros ->
+          blake2s_internal (size 1) block_zeros ll kk nn res const_iv const_sigma)
+      else begin
+        let nblocks = div #SIZE ll (size Spec.size_block) in
+        let rem = mod #SIZE ll (size Spec.size_block) in
+        let blocks = sub d (size 0) (nblocks *. (size Spec.size_block)) in
+        let last = sub d (nblocks *. (size Spec.size_block)) rem in
 
-        let padded_data' = sub padded_data (size 0) ll in
-        copy padded_data' ll d;
-
-        if (kk =. size 0) then
-	       blake2s_internal data_blocks padded_data ll kk nn res const_iv const_sigma
-        else begin
-	       let padded_key' = sub padded_key (size 0) kk in
-	       copy padded_key' kk k;
-
-	       let data' = sub data (size 0) (size Spec.size_block) in
-	       copy data' (size Spec.size_block) padded_key;
-
-	       let data' = sub data (size Spec.size_block) padded_data_length in
-          copy data' padded_data_length padded_data;
-
-	       blake2s_internal (data_blocks +. (size 1)) data' ll kk nn res const_iv const_sigma
-        end
-      )
+        alloc1 #h0 (size Spec.size_block) (u8 0) res
+        (fun h0 -> (fun _ r -> True))
+        (fun key_block ->
+          alloc1 #h0 (size Spec.size_block) (u8 0) res
+          (fun h0 -> (fun _ r -> True))
+          (fun last_block ->
+            let key_block = update_sub #uint8 #Spec.size_block #(v kk) key_block (size 0) kk k in
+            let last_block = update_sub #uint8 #Spec.size_block #(v rem) last_block (size 0) rem last in
+            if rem = 0 then blake2s_internal nblocks blocks ll kk nn res const_iv const_sigma
+            else begin
+              // FIXME: require incremental mode to handle the last block
+              blake2s_internal (nblocks +. (size 1)) blocks ll kk nn res const_iv const_sigma
+            end;
+            if kk = 0 then blake2s_internal nblocks blocks ll kk nn res const_iv const_sigma
+            else begin
+              // FIXME: require incremental mode to handle the last block
+              blake2s_internal (nblocks +. (size 1)) blocks ll kk nn res const_iv const_sigma
+            end
+          )
+        )
+      end
     )
   )
