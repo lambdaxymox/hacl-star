@@ -36,35 +36,37 @@ inline_for_extraction let list_iv : list uint32 =
   [u32 0x6A09E667; u32 0xBB67AE85; u32 0x3C6EF372; u32 0xA54FF53A;
    u32 0x510E527F; u32 0x9B05688C; u32 0x1F83D9AB; u32 0x5BE0CD19]
 
-let const_iv : intseq U32 8 =
-  assert_norm (List.Tot.length list_iv = 8);
+let size_const_iv = 8
+let const_iv : intseq U32 size_const_iv =
+  assert_norm (List.Tot.length list_iv = size_const_iv);
   createL list_iv
 
-inline_for_extraction let list_sigma: list (n:size_t{size_v n < 16}) = [
-  size  0; size  1; size  2; size  3; size  4; size  5; size  6; size  7;
-  size  8; size  9; size 10; size 11; size 12; size 13; size 14; size 15;
-  size 14; size 10; size  4; size  8; size  9; size 15; size 13; size  6;
-  size  1; size 12; size  0; size  2; size 11; size  7; size  5; size  3;
-  size 11; size  8; size 12; size  0; size  5; size  2; size 15; size 13;
-  size 10; size 14; size  3; size  6; size  7; size  1; size  9; size  4;
-  size  7; size  9; size  3; size  1; size 13; size 12; size 11; size 14;
-  size  2; size  6; size  5; size 10; size  4; size  0; size 15; size  8;
-  size  9; size  0; size  5; size  7; size  2; size  4; size 10; size 15;
-  size 14; size  1; size 11; size 12; size  6; size  8; size  3; size 13;
-  size  2; size 12; size  6; size 10; size  0; size 11; size  8; size  3;
-  size  4; size 13; size  7; size  5; size 15; size 14; size  1; size  9;
-  size 12; size  5; size  1; size 15; size 14; size 13; size  4; size 10;
-  size  0; size  7; size  6; size  3; size  9; size  2; size  8; size 11;
-  size 13; size 11; size  7; size 14; size 12; size  1; size  3; size  9;
-  size  5; size  0; size 15; size  4; size  8; size  6; size  2; size 10;
-  size  6; size 15; size 14; size  9; size 11; size  3; size  0; size  8;
-  size 12; size  2; size 13; size  7; size  1; size  4; size 10; size  5;
-  size 10; size  2; size  8; size  4; size  7; size  6; size  1; size  5;
-  size 15; size 11; size  9; size 14; size  3; size 12; size 13; size 0
+inline_for_extraction let list_sigma: list (n:uint32{uint_v n < 16}) = [
+  u32  0; u32  1; u32  2; u32  3; u32  4; u32  5; u32  6; u32  7;
+  u32  8; u32  9; u32 10; u32 11; u32 12; u32 13; u32 14; u32 15;
+  u32 14; u32 10; u32  4; u32  8; u32  9; u32 15; u32 13; u32  6;
+  u32  1; u32 12; u32  0; u32  2; u32 11; u32  7; u32  5; u32  3;
+  u32 11; u32  8; u32 12; u32  0; u32  5; u32  2; u32 15; u32 13;
+  u32 10; u32 14; u32  3; u32  6; u32  7; u32  1; u32  9; u32  4;
+  u32  7; u32  9; u32  3; u32  1; u32 13; u32 12; u32 11; u32 14;
+  u32  2; u32  6; u32  5; u32 10; u32  4; u32  0; u32 15; u32  8;
+  u32  9; u32  0; u32  5; u32  7; u32  2; u32  4; u32 10; u32 15;
+  u32 14; u32  1; u32 11; u32 12; u32  6; u32  8; u32  3; u32 13;
+  u32  2; u32 12; u32  6; u32 10; u32  0; u32 11; u32  8; u32  3;
+  u32  4; u32 13; u32  7; u32  5; u32 15; u32 14; u32  1; u32  9;
+  u32 12; u32  5; u32  1; u32 15; u32 14; u32 13; u32  4; u32 10;
+  u32  0; u32  7; u32  6; u32  3; u32  9; u32  2; u32  8; u32 11;
+  u32 13; u32 11; u32  7; u32 14; u32 12; u32  1; u32  3; u32  9;
+  u32  5; u32  0; u32 15; u32  4; u32  8; u32  6; u32  2; u32 10;
+  u32  6; u32 15; u32 14; u32  9; u32 11; u32  3; u32  0; u32  8;
+  u32 12; u32  2; u32 13; u32  7; u32  1; u32  4; u32 10; u32  5;
+  u32 10; u32  2; u32  8; u32  4; u32  7; u32  6; u32  1; u32  5;
+  u32 15; u32 11; u32  9; u32 14; u32  3; u32 12; u32 13; u32 0
 ]
 
-let const_sigma:lseq (n:size_t{size_v n < 16}) 160 =
-  assert_norm (List.Tot.length list_sigma = 160);
+let size_const_sigma = 160
+let const_sigma:lseq (n:uint32{uint_v n < 16}) size_const_sigma =
+  assert_norm (List.Tot.length list_sigma = size_const_sigma);
   createL list_sigma
 
 
@@ -92,20 +94,20 @@ let blake2_mixing wv a b c d x y =
 val blake2_round1 : working_vector -> message_block_w -> size_nat -> Tot working_vector
 let blake2_round1 wv m i =
   let s = sub const_sigma ((i % 10) * 16) 16 in
-  let wv = blake2_mixing wv 0 4  8 12 (m.[size_v s.[ 0]]) (m.[size_v s.[ 1]]) in
-  let wv = blake2_mixing wv 1 5  9 13 (m.[size_v s.[ 2]]) (m.[size_v s.[ 3]]) in
-  let wv = blake2_mixing wv 2 6 10 14 (m.[size_v s.[ 4]]) (m.[size_v s.[ 5]]) in
-  let wv = blake2_mixing wv 3 7 11 15 (m.[size_v s.[ 6]]) (m.[size_v s.[ 7]]) in
+  let wv = blake2_mixing wv 0 4  8 12 (m.[uint_to_nat s.[ 0]]) (m.[uint_to_nat s.[ 1]]) in
+  let wv = blake2_mixing wv 1 5  9 13 (m.[uint_to_nat s.[ 2]]) (m.[uint_to_nat s.[ 3]]) in
+  let wv = blake2_mixing wv 2 6 10 14 (m.[uint_to_nat s.[ 4]]) (m.[uint_to_nat s.[ 5]]) in
+  let wv = blake2_mixing wv 3 7 11 15 (m.[uint_to_nat s.[ 6]]) (m.[uint_to_nat s.[ 7]]) in
   wv
 
 
 val blake2_round2 : working_vector -> message_block_w -> size_nat -> Tot working_vector
 let blake2_round2 wv m i =
   let s = sub const_sigma ((i % 10) * 16) 16 in
-  let wv = blake2_mixing wv 0 5 10 15 (m.[size_v s.[ 8]]) (m.[size_v s.[ 9]]) in
-  let wv = blake2_mixing wv 1 6 11 12 (m.[size_v s.[10]]) (m.[size_v s.[11]]) in
-  let wv = blake2_mixing wv 2 7  8 13 (m.[size_v s.[12]]) (m.[size_v s.[13]]) in
-  let wv = blake2_mixing wv 3 4  9 14 (m.[size_v s.[14]]) (m.[size_v s.[15]]) in
+  let wv = blake2_mixing wv 0 5 10 15 (m.[uint_to_nat s.[ 8]]) (m.[uint_to_nat s.[ 9]]) in
+  let wv = blake2_mixing wv 1 6 11 12 (m.[uint_to_nat s.[10]]) (m.[uint_to_nat s.[11]]) in
+  let wv = blake2_mixing wv 2 7  8 13 (m.[uint_to_nat s.[12]]) (m.[uint_to_nat s.[13]]) in
+  let wv = blake2_mixing wv 3 4  9 14 (m.[uint_to_nat s.[14]]) (m.[uint_to_nat s.[15]]) in
   wv
 
 
