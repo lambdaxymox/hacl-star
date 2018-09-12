@@ -64,10 +64,10 @@ let op_String_Access #a #len = index #a #len
 let op_String_Assignment #a #len = upd #a #len
 
 
-val repeat_range: #a:Type -> min:size_nat -> max:size_nat{min <= max} -> (i:size_nat{i >= min /\ i < max}  -> a -> Tot a) -> a -> Tot (a)
+val repeat_range: #a:Type -> min:size_nat -> max:size_nat{min <= max} -> (i:size_nat{i >= min /\ i < max}  -> a -> Tot a) -> a -> Tot a (decreases (max - min))
 
-(* BB: I think, this might not be necessary *)
-val repeat_range_ghost: #a:Type -> min:size_nat -> max:size_nat{min <= max} -> (i:size_nat{i >= min /\ i < max}  -> a -> GTot a) -> a -> GTot (a)
+val repeat_range_ghost: #a:Type -> min:size_nat -> max:size_nat{min <= max} -> (i:size_nat{i >= min /\ i < max}  -> a -> GTot a) -> a -> GTot (a) (decreases (max - min))
+
 val repeat_range_all_ml: #a:Type -> min:size_nat -> max:size_nat{min <= max} -> (i:size_nat{i >= min /\ i < max}  -> a -> FStar.All.ML a) -> a -> FStar.All.ML (a)
 
 val repeati: #a:Type -> n:size_nat -> (i:size_nat{i < n}  -> a -> Tot a) -> a -> Tot (a)
@@ -84,12 +84,11 @@ val fold_lefti: #a:Type -> #b:Type -> #len:size_nat -> (i:size_nat{i < len} -> a
 
 val fold_left: #a:Type -> #b:Type -> #len:size_nat -> (a -> b -> Tot b) -> lseq a len -> b -> Tot (b)
 
+val for_all: #a:Type -> #len:size_nat -> (a -> Tot bool) -> lseq a len -> bool
+
 val map: #a:Type -> #b:Type -> #len:size_nat -> (a -> Tot b) -> lseq a len -> lseq b len
 
 //val mapi: #a:Type -> #b:Type -> #len:size_nat -> (i:size_nat{i < len} -> a -> Tot b) -> lseq a len -> lseq b len
-
-val for_all: #a:Type -> #len:size_nat -> (a -> Tot bool) -> lseq a len -> bool
-
 
 val ghost_map: #a:Type -> #b:Type -> #len:size_nat -> (a -> GTot b) -> lseq a len -> GTot (lseq b len)
 
@@ -111,6 +110,7 @@ val as_list: #a:Type -> #len:size_nat -> lseq a len -> l:list a{List.Tot.length 
 ///
 
 val concat: #a:Type -> #len1:size_nat -> #len2:size_nat{len1 + len2 <= maxint SIZE} -> lseq a len1 -> lseq a len2 -> lseq a (len1 + len2)
+
 let (@|) #a #len1 #len2 s1 s2 = concat #a #len1 #len2 s1 s2
 
 open FStar.Mul
@@ -120,6 +120,7 @@ val map_blocks: #a:Type0 ->
 		f:(i:size_nat{i + 1 <= nblocks} -> lseq a blocksize -> lseq a blocksize) ->
 		inp: lseq a (nblocks * blocksize) ->
 		out:  lseq a (nblocks * blocksize)
+
 val reduce_blocks: #a:Type0 -> #b:Type0 ->
 		blocksize:size_nat{blocksize > 0} ->
 		nblocks:size_nat{nblocks * blocksize <= maxint SIZE} ->
