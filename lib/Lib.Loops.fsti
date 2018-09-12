@@ -10,7 +10,7 @@ inline_for_extraction
 val for:
   start:size_t ->
   finish:size_t{v finish >= v start} ->
-  inv:(mem -> i:size_nat{v start <= i /\ i < v finish }  -> Type0) ->
+  inv:(mem -> i:size_nat{v start <= i /\ i <= v finish }  -> Type0) ->
   f:(i:size_t{v start <= v i /\ v i < v finish} -> Stack unit
                         (requires (fun h -> inv h (v i)))
                         (ensures (fun h_1 _ h_2 -> (inv h_2 (v i + 1)))) ) ->

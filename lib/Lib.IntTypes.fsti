@@ -79,6 +79,11 @@ val uint_t: t:inttype -> Type0
 inline_for_extraction
 val uint_v: #t:inttype -> u:uint_t t -> GTot (n:nat{n <= maxint t})
 
+val uintv_extensionality:
+  #t:inttype -> a:uint_t t -> b:uint_t t -> Lemma
+  (requires uint_v a == uint_v b)
+  (ensures  a == b)
+
 ///
 /// Definition of machine integers
 ///
@@ -209,11 +214,11 @@ type rotval  (t:m_inttype) = u:uint32{uint_v #U32 u > 0 /\ uint_v #U32 u < bits 
 
 inline_for_extraction
 val shift_right: #t:m_inttype -> a:uint_t t -> b:shiftval t ->
-    c:uint_t t//{uint_v #t c ==  uint_v #t a / pow2 (uint_v #U32 b)}
+  c:uint_t t//{uint_v #t c ==  uint_v #t a / pow2 (uint_v #U32 b)}
 
 inline_for_extraction
 val shift_left: #t:m_inttype -> a:uint_t t -> b:shiftval t ->
-    c:uint_t t//{uint_v #t c == (uint_v #t a `op_Multiply` pow2 (uint_v #U32 b)) % modulus t}
+  c:uint_t t//{uint_v #t c == (uint_v #t a `op_Multiply` pow2 (uint_v #U32 b)) % modulus t}
 
 inline_for_extraction
 val rotate_right: #t:m_inttype -> a:uint_t t -> b:rotval t -> uint_t t
@@ -243,35 +248,44 @@ val lt_mask:  #t:m_inttype -> a:uint_t t  -> b:uint_t t -> c:uint_t t
 inline_for_extraction
 val lte_mask:  #t:m_inttype -> a:uint_t t  -> b:uint_t t -> uint_t t
 
+inline_for_extraction
+let mod_mask (#t:m_inttype) (m:shiftval t) : uint_t t =
+  (nat_to_uint 1 `shift_left` m) `sub_mod` nat_to_uint 1
+
 val eq_mask_lemma: #t:m_inttype -> a:uint_t t -> b:uint_t t -> d:uint_t t -> Lemma
-    (requires (True))
-    (ensures  ((eq_mask #t a b) `logand` d == (if uint_v a = uint_v b then d else nat_to_uint 0)))
-    [SMTPat (eq_mask #t a b `logand` d)]
+  (requires (True))
+  (ensures  ((eq_mask #t a b) `logand` d == (if uint_v a = uint_v b then d else nat_to_uint 0)))
+  [SMTPat (eq_mask #t a b `logand` d)]
 
 val neq_mask_lemma: #t:m_inttype -> a:uint_t t -> b:uint_t t -> d:uint_t t -> Lemma
-    (requires (True))
-    (ensures  ((neq_mask #t a b) `logand` d == (if uint_v a <> uint_v b then d else nat_to_uint 0)))
-    [SMTPat (neq_mask #t a b `logand` d)]
+  (requires (True))
+  (ensures  ((neq_mask #t a b) `logand` d == (if uint_v a <> uint_v b then d else nat_to_uint 0)))
+  [SMTPat (neq_mask #t a b `logand` d)]
 
 val gt_mask_lemma: #t:m_inttype -> a:uint_t t -> b:uint_t t -> d:uint_t t -> Lemma
-    (requires (True))
-    (ensures  ((gt_mask #t a b) `logand` d == (if uint_v a > uint_v b then d else nat_to_uint 0)))
-    [SMTPat (gt_mask #t a b `logand` d)]
+  (requires (True))
+  (ensures  ((gt_mask #t a b) `logand` d == (if uint_v a > uint_v b then d else nat_to_uint 0)))
+  [SMTPat (gt_mask #t a b `logand` d)]
 
 val gte_mask_lemma: #t:m_inttype -> a:uint_t t -> b:uint_t t -> d:uint_t t -> Lemma
-    (requires (True))
-    (ensures  ((gte_mask #t a b) `logand` d == (if uint_v a >= uint_v b then d else nat_to_uint 0)))
-    [SMTPat (gte_mask #t a b `logand` d)]
+  (requires (True))
+  (ensures  ((gte_mask #t a b) `logand` d == (if uint_v a >= uint_v b then d else nat_to_uint 0)))
+  [SMTPat (gte_mask #t a b `logand` d)]
 
 val lt_mask_lemma: #t:m_inttype -> a:uint_t t -> b:uint_t t -> d:uint_t t -> Lemma
-    (requires (True))
-    (ensures  ((lt_mask #t a b) `logand` d == (if uint_v a  < uint_v b then d else nat_to_uint 0)))
-    [SMTPat (lt_mask #t a b `logand` d)]
+  (requires (True))
+  (ensures  ((lt_mask #t a b) `logand` d == (if uint_v a  < uint_v b then d else nat_to_uint 0)))
+  [SMTPat (lt_mask #t a b `logand` d)]
 
 val lte_mask_lemma: #t:m_inttype -> a:uint_t t -> b:uint_t t -> d:uint_t t -> Lemma
-    (requires (True))
-    (ensures  ((lte_mask #t a b) `logand` d == (if uint_v a  <= uint_v b then d else nat_to_uint 0)))
-    [SMTPat (lte_mask #t a b `logand` d)]
+  (requires (True))
+  (ensures  ((lte_mask #t a b) `logand` d == (if uint_v a  <= uint_v b then d else nat_to_uint 0)))
+  [SMTPat (lte_mask #t a b `logand` d)]
+
+val mod_mask_lemma: #t:m_inttype -> a:uint_t t -> m:shiftval t -> Lemma
+  (requires (True))
+  (ensures  (uint_v (a `logand` (mod_mask #t m)) == uint_v a % pow2 (uint_v m)))
+  [SMTPat (uint_v (a `logand` (mod_mask #t m)))]
 
 ///
 /// Operators available for all machine integers
@@ -403,6 +417,7 @@ let (=.) #t = eq #t
 
 inline_for_extraction
 let (<.) #t = lt #t
+
 inline_for_extraction
 let (<=.) #t = le #t
 
