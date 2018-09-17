@@ -109,15 +109,15 @@ val fold_left_range_: #a:Type -> #b:Type -> #len:size_nat
   -> b
   -> Tot b (decreases (max - min))
 
-let rec fold_left_range_ #a #b #len min max f l x =
-  admit()
+(* let rec fold_left_range_ #a #b #len min max f l x = *)
+(*   admit() *)
 
-let fold_left_range #a #b #len min max f l x =
-  fold_left_range_ #a #b #(max - min) min max f (slice #a #len l min max) x
+(* let fold_left_range #a #b #len min max f l x = *)
+(*   fold_left_range_ #a #b #(max - min) min max f (slice #a #len l min max) x *)
 
-let fold_lefti #a #b #len = fold_left_range #a #b #len 0 len
+(* let fold_lefti #a #b #len = fold_left_range #a #b #len 0 len *)
 
-let fold_left #a #b #len f = fold_left_range #a #b #len 0 len (fun i -> f)
+(* let fold_left #a #b #len f = fold_left_range #a #b #len 0 len (fun i -> f) *)
 
 let for_all #a #len f x = Seq.for_all f x
 

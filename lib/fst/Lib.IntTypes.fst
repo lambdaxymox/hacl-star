@@ -371,7 +371,10 @@ let size_to_uint32 x = x <: UInt32.t
 
 let nat_mod_v #m x = x
 
-let modulo x m = modulo_ x m
+inline_for_extraction
+let modulo (x:nat) m =
+  admit();
+  modulo_ x m
 
 let div #t x y =
   match t with
