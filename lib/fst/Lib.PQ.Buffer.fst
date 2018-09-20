@@ -242,3 +242,54 @@ assume val print_compare_display:
   -> Stack unit
     (requires fun h -> True)
     (ensures fun h0 _ h1 -> h0 == h1)
+
+let loop_inv (h0:mem) (h1:mem) (#a:Type) (len:size_nat) (n:size_t)  (buf:lbuffer a len)
+  (spec:(h:mem -> GTot (i:size_nat{i < v n} -> Seq.lseq a (len) -> Tot (Seq.lseq a (len))))) (i:size_t{v i <= v n}) : Type =
+  B.live h0 buf
+  /\ B.modifies (B.loc_buffer buf) h0 h1
+  /\ (let b0 = B.as_seq h0 buf in
+    let b1 = B.as_seq h1 buf in
+    b1 == Seq.repeati #(Seq.lseq a (len)) (v i) (spec h0) b0)
+
+val loop:
+  #h0:mem ->
+  #a:Type0 ->
+  #len:size_nat ->
+  n:size_t ->
+  buf:lbuffer a len ->
+  spec:(h:mem -> GTot (i:size_nat{i < v n} -> Seq.lseq a (len) -> Tot (Seq.lseq a (len)))) ->
+  impl:(i:size_t{v i < v n} -> Stack unit
+    (requires (fun h -> loop_inv h0 h #a len n buf spec i))
+    (ensures (fun _ _ h1 -> loop_inv h0 h1 #a len n buf spec (i +. size 1)))) ->
+  Stack unit
+	 (requires (fun h -> live h buf /\ h0 == h))
+	 (ensures (fun _ _ h1 -> B.modifies (B.loc_buffer buf) h0 h1
+                       /\ (let b0 = B.as_seq h0 buf in
+                       let b1 = B.as_seq h1 buf in
+                       b1 == Seq.repeati #(Seq.lseq a (len)) (v n) (spec h0) b0)))
+
+val alloc:
+    #h0:mem
+  -> #a:Type0
+  -> #b:Type0
+  -> #w:Type0
+  -> #len:size_nat
+  -> #wlen:size_nat
+  -> clen:size_t{v clen == len}
+  -> init:a
+  -> write:lbuffer w wlen
+  -> spec:(h:mem -> GTot(r:b -> Seq.lseq w (wlen) -> Type))
+  -> impl:(buf:lbuffer a len ->
+    Stack b
+    (requires (fun h ->
+               B.live h buf
+             /\ B.modifies (B.loc_buffer buf) h0 h
+             /\ B.live h0 write))
+(*		     B.as_seq h buf == LSeq.create #a (len) init /\ *)
+    (ensures (fun h r h' ->
+              B.modifies (B.loc_union (B.loc_buffer buf) (B.loc_buffer write)) h h'
+            /\ spec h0 r (B.as_seq h' write)))) ->
+  Stack b
+    (requires (fun h -> h == h0 /\ B.live h write))
+    (ensures (fun h0 r h1 -> B.modifies (B.loc_buffer write) h0 h1
+                        /\ spec h0 r (B.as_seq h1 write)))

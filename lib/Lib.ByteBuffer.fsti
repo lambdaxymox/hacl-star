@@ -4,9 +4,11 @@ open FStar.HyperStack
 open FStar.HyperStack.ST
 open Lib.IntTypes
 open Lib.Sequence
-open Lib.Buffer
+open Lib.PQ.Buffer
 
 module ByteSeq = Lib.ByteSequence
+module B = LowStar.Buffer
+module PQB = Lib.PQ.Buffer
 
 (* Integer Parsing and Serialization *)
 
@@ -15,18 +17,17 @@ val uint_from_bytes_le:
   #t:m_inttype ->
   i:lbuffer uint8 (numbytes t) ->
   Stack (uint_t t)
-	(requires (fun h0 -> live h0 i))
-	(ensures (fun h0 o h1 -> preserves_live h0 h1 /\
-			      o == ByteSeq.uint_from_bytes_le #t (as_lseq i h0)))
+	(requires (fun h0 -> B.live h0 i))
+	(ensures (fun h0 o h1 -> B.live h1 i /\ o == ByteSeq.uint_from_bytes_le #t (B.as_seq h0 i)))
 
 inline_for_extraction
 val uint_from_bytes_be:
   #t:m_inttype ->
   i:lbuffer uint8 (numbytes t) ->
   Stack (uint_t t)
-	(requires (fun h0 -> live h0 i))
-	(ensures (fun h0 o h1 -> preserves_live h0 h1 /\
-			      o == ByteSeq.uint_from_bytes_be #t (as_lseq i h0)))
+	(requires (fun h0 -> B.live h0 i))
+	(ensures (fun h0 o h1 -> B.live h1 i /\
+			      o == ByteSeq.uint_from_bytes_be #t (B.as_seq h0 i)))
 
 inline_for_extraction
 val uint_to_bytes_le:
