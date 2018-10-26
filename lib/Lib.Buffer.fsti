@@ -373,29 +373,31 @@ val memset:
 inline_for_extraction
 val update_sub:
     #a:Type
-  -> #len:size_nat
-  -> dst:lbuffer a len
+  -> #dlen:size_nat
+  -> #slen:size_nat
+  -> dst:lbuffer a dlen
   -> start:size_t
-  -> n:size_t{v start + v n <= len}
-  -> src:lbuffer a (size_v n) ->
+  -> n:size_t{v start + v n <= dlen /\ v n == slen}
+  -> src:lbuffer a slen ->
   Stack unit
     (requires fun h -> B.live h dst /\ B.live h src /\ B.disjoint dst src)
     (ensures  fun h0 _ h1 -> B.live h1 dst /\ B.modifies (B.loc_buffer dst) h0 h1 /\
-      as_seq h1 dst == Seq.update_sub #a #len (as_seq h0 dst) (v start) (v n) (as_seq h0 src))
+      as_seq h1 dst == Seq.update_sub #a #dlen (as_seq h0 dst) (v start) (v n) (as_seq h0 src))
 
 (** Copy an immutable Buffer in a part of a mutable Buffer *)
 inline_for_extraction
 val update_isub:
     #a:Type
-  -> #len:size_nat
-  -> dst:lbuffer a len
+  -> #dlen:size_nat
+  -> #slen:size_nat
+  -> dst:lbuffer a dlen
   -> start:size_t
-  -> n:size_t{v start + v n <= len}
-  -> src:ilbuffer a (size_v n) ->
+  -> n:size_t{v start + v n <= dlen /\ v n == slen}
+  -> src:ilbuffer a slen ->
   Stack unit
     (requires fun h -> B.live h dst /\ B.live h src /\ B.disjoint dst src)
     (ensures  fun h0 _ h1 -> B.live h1 dst /\ B.modifies (B.loc_buffer dst) h0 h1 /\
-      as_seq h1 dst == Seq.update_sub #a #len (as_seq h0 dst) (v start) (v n) (ias_seq h0 src))
+      as_seq h1 dst == Seq.update_sub #a #dlen (as_seq h0 dst) (v start) (v n) (ias_seq h0 src))
 
 (** Update a part of a mutable Buffer in-place with the application of a function F on another Buffer *)
 inline_for_extraction

@@ -29,7 +29,7 @@ val blake2s_init:
     (ensures  (fun h0 _ h1 -> LowStar.Buffer.modifies (LowStar.Buffer.loc_buffer hash) h0 h1
                          /\ h1.[hash] == Spec.Blake2.blake2_init Spec.Blake2S (v kk) h0.[k] (v nn)))
 
-let blake2s_init #vkk hash k kk nn = Impl.blake2s_init #vkk hash k kk nn
+let blake2s_init #vkk hash k kk nn = Impl.blake2_init #vkk Spec.Blake2S hash k kk nn
 
 
 val blake2s_update_block:
@@ -43,7 +43,7 @@ val blake2s_update_block:
     (ensures  (fun h0 _ h1 -> LowStar.Buffer.modifies (LowStar.Buffer.loc_buffer hash) h0 h1
                          /\ h1.[hash] == Spec.blake2_update_block Spec.Blake2S (v prev) h0.[d] h0.[hash]))
 
-let blake2s_update_block hash prev d = Impl.blake2s_update_block hash prev d
+let blake2s_update_block hash prev d = Impl.blake2_update_block Spec.Blake2S hash prev d
 
 
 val blake2s_update_last:
@@ -59,7 +59,7 @@ val blake2s_update_last:
     (ensures  (fun h0 _ h1 -> LowStar.Buffer.modifies (LowStar.Buffer.loc_buffer hash) h0 h1
                          /\ h1.[hash] == Spec.Blake2.blake2_update_last Spec.Blake2S (v prev) (v len) h0.[last] h0.[hash]))
 
-let blake2s_update_last #vlen hash prev last len = Impl.blake2s_update_last #vlen hash prev last len
+let blake2s_update_last #vlen hash prev last len = Impl.blake2_update_last #vlen Spec.Blake2S hash prev last len
 
 
 val blake2s_finish:
@@ -75,7 +75,7 @@ val blake2s_finish:
     (ensures  (fun h0 _ h1 -> LowStar.Buffer.modifies (LowStar.Buffer.loc_buffer output) h0 h1
                          /\ h1.[output] == Spec.Blake2.blake2_finish Spec.Blake2S h0.[hash] (v nn)))
 
-let blake2s_finish #vnn output hash nn = Impl.blake2s_finish #vnn output hash nn
+let blake2s_finish #vnn output hash nn = Impl.blake2_finish #vnn Spec.Blake2S output hash nn
 
 
 val blake2s:
