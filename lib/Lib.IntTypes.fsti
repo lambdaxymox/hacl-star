@@ -98,7 +98,6 @@ let uint_t (t:inttype) (l:secrecy_level) =
   | PUB -> pub_int_t t
   | SEC -> sec_int_t t
 
-unfold
 let uint_v #t #l (u:uint_t t l) : n:nat{n <= maxint t} =
   match l with
   | PUB -> pub_int_v #t u
@@ -165,6 +164,9 @@ unfold type pub_uint128 = uint_t U128 PUB
 
 inline_for_extraction
 val secret: #t:inttype -> u:uint_t t PUB -> v:uint_t t SEC{uint_v v == uint_v u}
+
+inline_for_extraction
+val uint: #t:inttype -> #l:secrecy_level -> (n:nat{n <= maxint t}) -> u:uint_t t l{uint_v u == n}
 
 inline_for_extraction
 val u8: (n:nat{n <= maxint U8}) -> u:uint8{uint_v #U8 u == n}
@@ -524,8 +526,7 @@ let (>=.) #t = gte #t
 
 
 inline_for_extraction
-let p_t (t:inttype) = 
+let p_t (t:inttype) =
   match t with
   | U32 -> UInt32.t
   | _ -> UInt64.t
-
